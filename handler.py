@@ -5,6 +5,7 @@ import urllib.request
 import urllib.parse
 import time
 import os
+import sys
 import requests
 import base64
 from io import BytesIO
@@ -15,10 +16,27 @@ import socket
 import traceback
 import logging
 
+# Add src directory to path for api_templates module
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+
 from network_volume import (
     is_network_volume_debug_enabled,
     run_network_volume_diagnostics,
 )
+
+# API Templates support (OpenAI-style API to ComfyUI workflow translation)
+try:
+    from api_templates import (
+        APIToComfyTranslator,
+        TemplateRegistry,
+        VideoGenerateRequest,
+        ImageGenerateRequest,
+    )
+    from api_templates.translator import translate_api_request
+    API_TEMPLATES_AVAILABLE = True
+except ImportError:
+    API_TEMPLATES_AVAILABLE = False
+    logger = None  # Will be set up below
 
 # ---------------------------------------------------------------------------
 # Logging setup
@@ -143,6 +161,10 @@ def validate_input(job_input):
     """
     Validates the input for the handler function.
 
+    Supports two input formats:
+    1. Legacy format: {"workflow": {...}, "images": [...]}
+    2. API format: {"prompt": "...", "model": "...", ...} (OpenAI-style)
+
     Args:
         job_input (dict): The input data to validate.
 
@@ -161,10 +183,34 @@ def validate_input(job_input):
         except json.JSONDecodeError:
             return None, "Invalid JSON format in input"
 
-    # Validate 'workflow' in input
+    # Check for API format (OpenAI-style with prompt)
+    if "prompt" in job_input and "workflow" not in job_input:
+        # This is an API-style request, translate to workflow
+        if not API_TEMPLATES_AVAILABLE:
+            return None, "API templates not available. Please provide a 'workflow' parameter or install api_templates module."
+
+        try:
+            workflow, images, warnings = translate_api_request(job_input)
+            if warnings:
+                print(f"worker-comfyui - API translation warnings: {warnings}")
+
+            comfy_org_api_key = job_input.get("comfy_org_api_key")
+
+            return {
+                "workflow": workflow,
+                "images": images,
+                "comfy_org_api_key": comfy_org_api_key,
+                "api_mode": True,
+                "api_warnings": warnings,
+            }, None
+
+        except Exception as e:
+            return None, f"Failed to translate API request: {str(e)}"
+
+    # Legacy format: Validate 'workflow' in input
     workflow = job_input.get("workflow")
     if workflow is None:
-        return None, "Missing 'workflow' parameter"
+        return None, "Missing 'workflow' parameter (or 'prompt' for API mode)"
 
     # Validate 'images' in input, if provided
     images = job_input.get("images")
@@ -185,6 +231,7 @@ def validate_input(job_input):
         "workflow": workflow,
         "images": images,
         "comfy_org_api_key": comfy_org_api_key,
+        "api_mode": False,
     }, None
 
 

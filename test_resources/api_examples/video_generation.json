@@ -1,0 +1,109 @@
+{
+  "description": "Example API requests for video generation using OpenAI-style format",
+  "examples": {
+    "basic_text_to_video": {
+      "input": {
+        "prompt": "A majestic eagle soaring through mountain peaks at sunset, cinematic, 4k quality",
+        "negative_prompt": "blurry, distorted, low quality, watermark",
+        "duration": 5,
+        "resolution": "720p",
+        "fps": 24
+      }
+    },
+    "image_to_video": {
+      "input": {
+        "prompt": "The subject slowly turns their head and smiles warmly",
+        "source_image_base64": "<base64_encoded_image>",
+        "duration": 3,
+        "resolution": "720p",
+        "model": "wan-i2v"
+      }
+    },
+    "with_lora": {
+      "input": {
+        "prompt": "A cyberpunk cityscape with neon lights and flying cars",
+        "duration": 5,
+        "resolution": "720p",
+        "loras": [
+          {
+            "name": "cyberpunk_style",
+            "weight": 0.8
+          }
+        ]
+      }
+    },
+    "with_template_overrides": {
+      "input": {
+        "prompt": "Ocean waves crashing on a rocky shore",
+        "template": {
+          "template_name": "wan_t2v",
+          "sampler": {
+            "sampler_name": "euler",
+            "scheduler": "normal",
+            "steps": 40,
+            "cfg_scale": 7.0
+          }
+        }
+      }
+    },
+    "fast_preview": {
+      "input": {
+        "prompt": "A flower blooming in timelapse",
+        "duration": 3,
+        "resolution": "480p",
+        "model": "wan-fast"
+      }
+    },
+    "with_seed_for_reproducibility": {
+      "input": {
+        "prompt": "Northern lights dancing over a frozen lake",
+        "duration": 5,
+        "resolution": "720p",
+        "seed": 42
+      }
+    },
+    "hd_long_video": {
+      "input": {
+        "prompt": "A peaceful forest stream with sunlight filtering through the trees",
+        "negative_prompt": "text, watermark, low quality",
+        "duration": 10,
+        "resolution": "1080p",
+        "fps": 24
+      }
+    },
+    "with_lora_and_lycoris": {
+      "input": {
+        "prompt": "An anime character walking through a cherry blossom garden",
+        "duration": 5,
+        "resolution": "720p",
+        "loras": [
+          {
+            "name": "anime_style",
+            "weight": 0.7
+          }
+        ],
+        "lycoris": [
+          {
+            "name": "detail_enhancer",
+            "weight": 0.5
+          }
+        ]
+      }
+    },
+    "with_hf_model_download": {
+      "input": {
+        "prompt": "A vintage car driving through a 1950s American town",
+        "duration": 5,
+        "resolution": "720p",
+        "loras": [
+          {
+            "name": "vintage_style",
+            "weight": 0.6,
+            "hf_repo": "example/vintage-lora",
+            "hf_filename": "vintage_style.safetensors"
+          }
+        ]
+      }
+    }
+  }
+}
